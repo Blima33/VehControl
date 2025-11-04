@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Confirmar Entrada</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="confirmacao-container">
+        <h2>Confirme os Dados do Veículo</h2>
+        <p><strong>Responsável:</strong> {{ responsavel }}</p>
+        <p><strong>Placa:</strong> {{ placa }}</p>
+
+        <form method="POST" action="{{ url_for('entrada') }}">
+            <input type="hidden" name="responsavel" value="{{ responsavel }}">
+            <input type="hidden" name="placa" value="{{ placa }}">
+            <input type="hidden" name="confirmar" value="1">
+
+            <button type="submit">Confirmar</button>
+            <button type="button" onclick="window.location.href='{{ url_for('entrada') }}'">Cancelar</button>
+
+        </form>
+    </div>
+</body>
+</html>

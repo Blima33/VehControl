@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Saída de Veículo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Consultar Veículo para Saída</h1>
+    <div class="form-container">
+        <form method="POST">
+            <label>Placa:</label><br>
+            <input type="text" name="placa" required><br>
+            <button type="submit">Buscar Veículo</button>
+        </form>
+    </div>
+
+    {% if veiculo %}
+        <hr>
+        <div class="veiculo-detalhes">
+            <h2>Veículo Encontrado:</h2>
+            <p><strong>Responsável:</strong> {{ veiculo['responsavel'] }}</p>
+            <p><strong>Placa:</strong> {{ veiculo['placa'] }}</p>
+            <p><strong>Entrada:</strong> {{ veiculo['entrada'] }}</p>
+            
+            <form method="POST" action="{{ url_for('confirmar_saida', id=veiculo['id']) }}">
+                <button type="submit">Confirmar Saída</button>
+            </form>
+        </div>
+    {% elif erro %}
+        <p style="color:red; text-align: center">{{ erro }}</p>
+    {% endif %}
+</body>
+</html>

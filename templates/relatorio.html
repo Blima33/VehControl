@@ -3,35 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <title>Relatório de Veículos</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background: linear-gradient(to right, #94f0d9, #0a5c3d);
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+        h1 {
+            text-align: center;
+        }
+        form {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        input[type="date"], button {
+            padding: 8px;
+            margin: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+        th {
+            background-color: #0a5c3d;
+            color: #ffffff;
+        }
+        .sem-registros {
+            text-align: center;
+            color: #555;
+            margin-top: 20px;
+            font-style: italic;
+        }
+    </style>
 </head>
 <body>
-    <h2>Relatório de Entradas e Saídas</h2>
 
-    <table border="1" cellpadding="5" cellspacing="0">
+    <h1>Relatório de Movimentação de Veículos</h1>
+
+    <form method="POST" action="{{ url_for('relatorio') }}">
+        <label>Data início:</label>
+        <input type="date" name="data_inicio" value="{{ data_inicio }}">
+        <label>Data fim:</label>
+        <input type="date" name="data_fim" value="{{ data_fim }}">
+        <button type="submit">Filtrar</button>
+    </form>
+
+    {% if registros %}
+    <table>
         <thead>
             <tr>
                 <th>Responsável</th>
                 <th>Placa</th>
-                <th>Data Entrada</th>
-                <th>Data Saída</th>
+                <th>Entrada</th>
+                <th>Saída</th>
             </tr>
         </thead>
         <tbody>
             {% for r in registros %}
             <tr>
-                <td>{{ r[0] }}</td>
-                <td>{{ r[1] }}</td>
-                <td>{{ r[2] }}</td>
-                <td>{{ r[3] if r[3] else '---' }}</td>
+                <td>{{ r.responsavel }}</td>
+                <td>{{ r.placa }}</td>
+                <td>{{ r.entrada }}</td>
+                <td>{{ r.saida }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    {% else %}
+    <p class="sem-registros">Nenhum registro encontrado para o período selecionado.</p>
+    {% endif %}
 
-    <br>
-    <div>
-        <a href="{{ url_for('relatorio') }}">Atualizar Relatório</a>
-    </div>
 </body>
 </html>

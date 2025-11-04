@@ -4,8 +4,9 @@ import sqlite3
 
 app = Flask(__name__)
 app.secret_key = 'sua_chave_secreta'  # Necessária para usar flash
-  
-# Criação do banco e tabelas se não existirem
+
+
+# === Criação do banco e tabelas ===
 def init_db():
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
@@ -41,18 +42,17 @@ def init_db():
 init_db()
 
 
-# Função para buscar colaborador pela placa
+# === Função utilitária ===
 def buscar_colaborador_por_placa(placa):
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     c.execute('SELECT nome_proprietario FROM colaboradores WHERE placa = ?', (placa.upper(),))
     resultado = c.fetchone()
     conn.close()
-    if resultado:
-        return resultado[0]
-    else:
-        return None
+    return resultado[0] if resultado else None
 
+
+# === Rotas ===
 
 @app.route('/')
 def index():
@@ -64,7 +64,6 @@ def entrada():
     if request.method == 'POST':
         placa = request.form['placa'].upper()
 
-        # Buscar colaborador pela placa
         responsavel = buscar_colaborador_por_placa(placa)
 
         if 'confirmar' in request.form:
@@ -83,7 +82,6 @@ def entrada():
             flash("Entrada registrada com sucesso!")
             return redirect(url_for('entrada'))
         else:
-            # Primeira submissão — mostra confirmação
             if not responsavel:
                 responsavel = request.form['responsavel']
 
@@ -102,6 +100,7 @@ def saida():
         c.execute("""SELECT id, responsavel, placa, entrada FROM veiculos 
                      WHERE placa=? AND saida IS NULL ORDER BY entrada DESC LIMIT 1""", (placa,))
         row = c.fetchone()
+        conn.close()
 
         if row:
             veiculo = {
@@ -110,11 +109,10 @@ def saida():
                 'placa': row[2],
                 'entrada': row[3]
             }
-            conn.close()
             return render_template('saida.html', veiculo=veiculo)
         else:
-            conn.close()
             return render_template('saida.html', erro="Veículo não encontrado ou já saiu.")
+
     return render_template('saida.html')
 
 
@@ -129,16 +127,58 @@ def confirmar_saida(id):
     return render_template('sucesso.html', mensagem="Saída registrada com sucesso!")
 
 
-@app.route('/relatorio')
+# === Rota do Relatório com Filtro de Data ===
+@app.route('/relatorio', methods=['GET', 'POST'])
 def relatorio():
+    registros = []
+    data_inicio = request.form.get('data_inicio')
+    data_fim = request.form.get('data_fim')
+
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT responsavel, placa, entrada, saida FROM veiculos")
+
+    query = "SELECT responsavel, placa, entrada, saida FROM veiculos WHERE 1=1"
+    params = []
+
+    # Filtros de data (intervalo)
+    if data_inicio:
+        data_inicio_dt = datetime.strptime(data_inicio, "%Y-%m-%d")
+        query += " AND datetime(entrada) >= ?"
+        params.append(data_inicio_dt.strftime("%Y-%m-%d 00:00:00"))
+
+    if data_fim:
+        data_fim_dt = datetime.strptime(data_fim, "%Y-%m-%d")
+        query += " AND datetime(entrada) <= ?"
+        params.append(data_fim_dt.strftime("%Y-%m-%d 23:59:59"))
+
+    query += " ORDER BY datetime(entrada) DESC"
+    c.execute(query, params)
     registros = c.fetchall()
     conn.close()
-    return render_template('relatorio.html', registros=registros)
 
+    # Função auxiliar para formatar data/hora
+    def formatar_data(data_str):
+        if not data_str:
+            return "-"
+        dt = datetime.strptime(data_str, "%Y-%m-%d %H:%M:%S")
+        return dt.strftime("%d/%m/%Y %H:%M")
 
+    registros_formatados = [
+        {
+            "responsavel": r[0],
+            "placa": r[1],
+            "entrada": formatar_data(r[2]),
+            "saida": formatar_data(r[3])
+        }
+        for r in registros
+    ]
+
+    return render_template(
+        'relatorio.html',
+        registros=registros_formatados,
+        data_inicio=data_inicio,
+        data_fim=data_fim
+    )
 
 
 if __name__ == '__main__':
